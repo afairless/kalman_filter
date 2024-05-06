@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import numpy as np
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, Callable
 from scipy.linalg import inv as scipy_inv
 
 
@@ -101,12 +101,105 @@ def kalman_update_multivariate(
     return x2, P2
 
 
+def kalman_update_multivariate_reannotated(
+    a_t: np.ndarray, P_t: np.ndarray, 
+    T: np.ndarray, Q: np.ndarray, 
+    B: np.ndarray, u: np.ndarray, 
+    Z: np.ndarray, H: np.ndarray, 
+    y_t: float) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Calculates one Kalman filter update step for multivariate state
+
+    The variable names in this function have been changed to match Durbin and 
+        Koopman (2012) 
+    In the variable/parameter descriptions below, the first name matches 
+        nomenclature in most of the control research literature, including 
+        Labbe (2020), and in the function 'kalman_update_multivariate' above;
+        the second name corresponds to Durbin and Koopman (2012)
+
+    Input parameters:
+        'x0' / 'a_t' - state estimate
+        'P0' / 'P_t' - state covariance estimate
+        'F' / 'T' - process model / state transition matrix
+        'Q' - process noise / state disturbance covariance matrix
+        'B' / omitted - control input model / control function
+        'u' / omitted - control input
+        'H' / 'Z' - measurement function / design matrix
+        'R' / 'H'- measurement noise / observation disturbance covariance matrix
+        'z' / 'y_t' - measurement / observation / data point
+        omitted / 'R' - selection matrix
+
+    Intermediate variables:
+        'x1' / 'a1' - predicted state at next time step
+        'P1' - predicted state covariance at next time step
+        'S' / 'F' - system uncertainty / innovation covariance / predicted state 
+            covariance projected into measurement space
+        'K' - Kalman gain / scaling factor
+        'y' / 'v_t' - residual between predicted state and measurement in 
+            measurement space
+
+    Output variables:
+        'x2' / 'a_t1' - updated state estimate
+        'P2' / 'P_t1'- updated state covariance estimate
+
+    Adapted from:
+        https://rlabbe.github.io/Kalman-and-Bayesian-Filters-in-Python/
+        https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python
+        Kalman and Bayesian Filters in Python
+        Roger R Labbe Jr
+        May 23, 2020
+
+        Chapter 6 Multivariate Kalman Filters
+        6.9 The Kalman Filter Equations
+        6.9.3 An Example not using FilterPy
+
+        PDF version, page 211:
+        https://drive.google.com/open?id=0By_SW19c1BfhSVFzNHc0SjduNzg
+
+    Re-annotated to match:
+        Time Series Analysis by State Space Methods, 2nd Edition
+        J. Durbin and S.J. Koopman
+        Oxford University Press, 2012
+        ISBN: 978-0-19-964117-8
+
+    Some terminology taken from:
+        https://www.chadfulton.com/files/fulton_statsmodels_2017_v1.pdf
+        Estimating time series models by state space methods in Python: 
+            Statsmodels
+        Chad Fulton
+        2017
+    """
+
+    # the selection matrix 'R' is often but not always the identity matrix
+    #   Durbin and Koopman (2012), pages 43-44
+    # I am restricting 'R' to the identity matrix and excluding it from the 
+    #   input parameters to show where it fits into calculations without 
+    #   changing behavior of the function, compared to 
+    #   'kalman_update_multivariate'
+    R = np.eye(T.shape[0], Q.shape[0])
+    assert np.all(Q == R @ Q @ R.T)
+
+    # predict
+    a1 = T @ a_t #+ B @ u
+    P1 = T @ P_t @ T.T + R @ Q @ R.T
+
+    # update
+    F = Z @ P1 @ Z.T + H
+    K = P1 @ Z.T @ scipy_inv(F)
+    v_t = y_t - Z @ a1
+    a_t1 = a1 + K @ v_t
+    P_t1 = P1 - K @ Z @ P1
+
+    return a_t1, P_t1 
+
+
 def kalman_updates_sequence_multivariate(
     x0: np.ndarray, P0: np.ndarray, 
     F: np.ndarray, Q: np.ndarray, 
     B: np.ndarray, u: np.ndarray, 
     H: np.ndarray, R: np.ndarray, 
-    z_vec: Sequence[float]) -> tuple[list[np.ndarray], list[np.ndarray]]:
+    z_vec: Sequence[float],
+    kalman_function: Callable) -> tuple[list[np.ndarray], list[np.ndarray]]:
     """
     Calculates a sequence of Kalman filter updates for multivariate state
     """
@@ -114,8 +207,7 @@ def kalman_updates_sequence_multivariate(
     xs = [x0]
     cov = [P0]
     for z_i in z_vec:
-        x, P = kalman_update_multivariate(
-            xs[-1], cov[-1], F, Q, B, u, H, R, z_i)
+        x, P = kalman_function(xs[-1], cov[-1], F, Q, B, u, H, R, z_i)
         xs.append(x)
         cov.append(P)
 
@@ -125,7 +217,6 @@ def kalman_updates_sequence_multivariate(
 def main():
 
     print('This is the main function.')
-
 
 
 if __name__ == '__main__':

@@ -4,6 +4,8 @@ import numpy as np
 
 from src.project import (
     kalman_updates_sequence_univariate,
+    kalman_update_multivariate,
+    kalman_update_multivariate_reannotated,
     kalman_updates_sequence_multivariate,
     )
 
@@ -65,7 +67,31 @@ def test_esme_example_multivariate():
         u=np.array([0.]).reshape(1, 1),
         H=np.array([1.]).reshape(1, 1),
         R=np.array(r).reshape(1, 1),
-        z_vec=z)
+        z_vec=z,
+        kalman_function=kalman_update_multivariate)
+
+    assert all([e[0] == np.round(e[1], 3)[0][0] for e in zip(correct_x, result_x)])
+    assert all([e[0] == np.round(e[1], 3)[0][0] for e in zip(correct_p, result_p)])
+
+
+def test_esme_example_multivariate_reannotated():
+    """
+    Test Esme example data with multivariate Kalman filter
+    """
+
+    x0, p0, r, z, correct_x, correct_p = esme_kalman_input_output()
+
+    result_x, result_p = kalman_updates_sequence_multivariate(
+        x0=np.array(np.array(x0[0]).reshape(1, 1)),
+        P0=np.array(np.array(p0[0]).reshape(1, 1)),
+        F=np.array([1.]).reshape(1, 1),
+        Q=np.array([0.]).reshape(1, 1),
+        B=np.array([0.]).reshape(1, 1),
+        u=np.array([0.]).reshape(1, 1),
+        H=np.array([1.]).reshape(1, 1),
+        R=np.array(r).reshape(1, 1),
+        z_vec=z,
+        kalman_function=kalman_update_multivariate_reannotated)
 
     assert all([e[0] == np.round(e[1], 3)[0][0] for e in zip(correct_x, result_x)])
     assert all([e[0] == np.round(e[1], 3)[0][0] for e in zip(correct_p, result_p)])
@@ -481,7 +507,7 @@ def labbe_chapter_6_kalman_input_output_02():
     return x_input, p_input, r_input, q_input, z_input, x_output, p_output
 
 
-def test_labbe_chapter_6_example_01():
+def test_labbe_chapter_6_example_1_multivariate():
     """
     Test Labbe Chapter 6 example #1 data with multivariate Kalman filter
     """
@@ -498,7 +524,8 @@ def test_labbe_chapter_6_example_01():
         u=np.array([0.]).reshape(1, 1),
         H=np.array([1., 0.]).reshape(1, 2),
         R=np.array(r).reshape(1, 1),
-        z_vec=z)
+        z_vec=z,
+        kalman_function=kalman_update_multivariate)
 
     result_x_arr = np.stack(result_x).reshape(-1, 2)
     assert np.allclose(result_x_arr, correct_x, atol=1e-3)
@@ -507,7 +534,7 @@ def test_labbe_chapter_6_example_01():
     assert np.allclose(result_p_arr, correct_p, atol=1e-3)
 
 
-def test_labbe_chapter_6_example_02():
+def test_labbe_chapter_6_example_2_multivariate():
     """
     Test Labbe Chapter 6 example #2 data with multivariate Kalman filter
     """
@@ -524,7 +551,62 @@ def test_labbe_chapter_6_example_02():
         u=np.array([0.]).reshape(1, 1),
         H=np.array([1., 0.]).reshape(1, 2),
         R=np.array(r).reshape(1, 1),
-        z_vec=z)
+        z_vec=z,
+        kalman_function=kalman_update_multivariate)
+
+    result_x_arr = np.stack(result_x).reshape(-1, 2)
+    assert np.allclose(result_x_arr, correct_x, atol=1e-2)
+
+    result_p_arr = np.stack(result_p)
+    assert np.allclose(result_p_arr, correct_p, atol=1e-1)
+
+
+def test_labbe_chapter_6_example_1_multivariate_reannotated():
+    """
+    Test Labbe Chapter 6 example #1 data with multivariate Kalman filter
+    """
+
+    x0, p0, r, q, z, correct_x, correct_p = (
+        labbe_chapter_6_kalman_input_output_01())
+
+    result_x, result_p = kalman_updates_sequence_multivariate(
+        x0=np.array(np.array(x0).reshape(2, 1)),
+        P0=p0,
+        F=np.array([[1., 1.], [0., 1.]]),
+        Q=np.array([[50., 100.], [100., q]]),
+        B=np.array([0.]).reshape(1, 1),
+        u=np.array([0.]).reshape(1, 1),
+        H=np.array([1., 0.]).reshape(1, 2),
+        R=np.array(r).reshape(1, 1),
+        z_vec=z,
+        kalman_function=kalman_update_multivariate_reannotated)
+
+    result_x_arr = np.stack(result_x).reshape(-1, 2)
+    assert np.allclose(result_x_arr, correct_x, atol=1e-3)
+
+    result_p_arr = np.stack(result_p)
+    assert np.allclose(result_p_arr, correct_p, atol=1e-3)
+
+
+def test_labbe_chapter_6_example_2_multivariate_reannotated():
+    """
+    Test Labbe Chapter 6 example #2 data with multivariate Kalman filter
+    """
+
+    x0, p0, r, q, z, correct_x, correct_p = (
+        labbe_chapter_6_kalman_input_output_02())
+
+    result_x, result_p = kalman_updates_sequence_multivariate(
+        x0=np.array(np.array(x0).reshape(2, 1)),
+        P0=p0,
+        F=np.array([[1., 1.], [0., 1.]]),
+        Q=np.array([[0.005, 0.01], [0.01, q]]),
+        B=np.array([0.]).reshape(1, 1),
+        u=np.array([0.]).reshape(1, 1),
+        H=np.array([1., 0.]).reshape(1, 2),
+        R=np.array(r).reshape(1, 1),
+        z_vec=z,
+        kalman_function=kalman_update_multivariate_reannotated)
 
     result_x_arr = np.stack(result_x).reshape(-1, 2)
     assert np.allclose(result_x_arr, correct_x, atol=1e-2)
