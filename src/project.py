@@ -1,8 +1,12 @@
 #! /usr/bin/env python3
 
 import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
 from typing import Iterable, Sequence, Callable
 from scipy.linalg import inv as scipy_inv
+from pathlib import Path
 
 
 def kalman_update_univariate(
@@ -214,9 +218,95 @@ def kalman_updates_sequence_multivariate(
     return xs, cov
 
 
+def plot_kalman_results(
+    data_x_time: np.ndarray, data_y: np.ndarray, 
+    state: np.ndarray, state_variance: np.ndarray,
+    output_path: Path):
+    """
+    Plot results from Kalman filter pass:
+        1) filter state and observed data vs. time
+        2) filter variance vs. time
+        3) filter prediction errors vs. time
+
+    'data_x_time' - observed data time points
+    'data_y_time' - observed data y values
+    'state' - univariate filter state (filtered or smooth)
+    'state_variance' - univariate filter state variance
+    'output_path' - directory in which to save plots
+    """
+
+    filename = 'filter_state_with_data.png'
+    filepath = output_path / filename
+    fig = plt.scatter(data_x_time, data_y)
+    fig = plt.plot(data_x_time, state, color='black')
+    fig = plt.title('Filter state with observed data')
+    plt.savefig(filepath)
+    plt.clf()
+    plt.close()
+
+    filename = 'filter_variance.png'
+    filepath = output_path / filename
+    fig = plt.plot(data_x_time, state_variance)
+    fig = plt.title('Filter variance')
+    plt.savefig(filepath)
+    plt.clf()
+    plt.close()
+
+    filename = 'prediction_errors.png'
+    filepath = output_path / filename
+    fig = plt.plot(data_x_time, data_y - state)
+    fig = plt.hlines(0, data_x_time.min(), data_x_time.max(), colors='black')
+    fig = plt.title('Filter prediction errors')
+    plt.savefig(filepath)
+    plt.clf()
+    plt.close()
+
+
+def durbin_koopman_figure_2_1_multivariate():
+    """
+    Replicates results from a Kalman filter pass over the classic Nile River 
+        data set as presented in Durbin and Koopman (2012) Figure 2.1, page 16
+
+    Reference:
+        Time Series Analysis by State Space Methods, 2nd Edition
+        J. Durbin and S.J. Koopman
+        Oxford University Press, 2012
+        ISBN: 978-0-19-964117-8
+    """
+
+    df = sm.datasets.nile.load().data
+    assert isinstance(df, pd.DataFrame)
+    y = df['volume']
+    t = df['year'].values
+
+    # filter initialization from Durbin and Koopman (2012)
+    a = [0.]
+    P = [1e7]
+    sig_e = 15099
+    sig_n = 1469.1
+
+    result_x, result_p = kalman_updates_sequence_multivariate(
+        x0=np.array(np.array(a[0]).reshape(1, 1)),
+        P0=np.array(np.array(P[0]).reshape(1, 1)),
+        F=np.array([1.]).reshape(1, 1),
+        Q=np.array([sig_n]).reshape(1, 1),
+        B=np.array([0.]).reshape(1, 1),
+        u=np.array([0.]).reshape(1, 1),
+        H=np.array([1.]).reshape(1, 1),
+        R=np.array(sig_e).reshape(1, 1),
+        z_vec=y,
+        kalman_function=kalman_update_multivariate)
+
+    result_x_arr = np.stack(result_x).reshape(-1)
+    result_p_arr = np.stack(result_p).reshape(-1)
+
+    output_path = Path.cwd() / 'output'
+    plot_kalman_results(t, y, result_x_arr[1:], result_p_arr[1:], output_path)
+
+
 def main():
 
-    print('This is the main function.')
+    durbin_koopman_figure_2_1_multivariate()
 
 
 if __name__ == '__main__':
