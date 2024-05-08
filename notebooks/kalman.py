@@ -76,7 +76,7 @@ $$ P_{t|t} = P_t - P_t Z_t' F_t^{-1} Z_t P_t $$
 Now, the table specifying how the variables correspond:
 
 | Labbe (2020) | Durbin and Koopman (2012) | Terminology |
-| - | - | - |
+| -- | -- | -- |
 | $\mathbf x$ | $$a_t$$ | state estimate |
 | $\mathbf {\bar x}$ | $$a_{t+1}$$ | predicted state at next time step |
 | $\mathbf F$ | $$T_t$$ | process model / state transition matrix |
