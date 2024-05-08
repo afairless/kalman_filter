@@ -1,7 +1,7 @@
  
 import numpy as np
 
-from src.project import (
+from src.kalman_filter import (
     kalman_updates_sequence_univariate,
     kalman_update_multivariate,
     kalman_update_multivariate_reannotated,
