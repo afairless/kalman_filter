@@ -32,18 +32,19 @@ $$
 
 Second, the equations from Durbin and Koopman (2012), (4.24) on page 85, but in the same order as above:
 
-$$
-\begin{aligned}
-a_{t+1} = T_t a_t + K_t v_t  
-P_{t+1} = T_t P_t (T_t - K_t Z_t)' + R_t Q_t R_t'  
+$$ a_{t+1} = T_t a_t + K_t v_t  $$  
 
-F_t = Z_t P_t Z_t' + H_t  
-K_t = T_t P_t Z_t' F_t^{-1}  
-v_t = y_t - Z_t a_t  
-a_{t|t} = a_t + P_t Z_t' F_t^{-1} v_t  
-P_{t|t} = P_t - P_t Z_t' F_t^{-1} Z_t P_t  
-\end{aligned}
-$$
+$$ P_{t+1} = T_t P_t (T_t - K_t Z_t)' + R_t Q_t R_t'  $$  
+
+$$ F_t = Z_t P_t Z_t' + H_t  $$  
+
+$$ K_t = T_t P_t Z_t' F_t^{-1} $$   
+
+$$ v_t = y_t - Z_t a_t  $$  
+
+$$ a_{t|t} = a_t + P_t Z_t' F_t^{-1} v_t  $$  
+
+$$ P_{t|t} = P_t - P_t Z_t' F_t^{-1} Z_t P_t  $$    
 
 Now, the table specifying how the variables correspond:
 
