@@ -33,12 +33,17 @@ $$
 Second, the equations from Durbin and Koopman (2012), (4.24) on page 85, but in the same order as above:
 
 $$ a_{t+1} = T_t a_t + K_t v_t $$
+\\
 $$ P_{t+1} = T_t P_t (T_t - K_t Z_t)' + R_t Q_t R_t' $$
 \\
 $$ F_t = Z_t P_t Z_t' + H_t $$
+\\
 $$ K_t = T_t P_t Z_t' F_t^{-1} $$
+\\
 $$ v_t = y_t - Z_t a_t $$
+\\
 $$ a_{t|t} = a_t + P_t Z_t' F_t^{-1} v_t $$
+\\
 $$ P_{t|t} = P_t - P_t Z_t' F_t^{-1} Z_t P_t $$
 
 Now, the table specifying how the variables correspond:
@@ -66,3 +71,35 @@ Now, the table specifying how the variables correspond:
 ## Testing Implementation Code
 
 In addition to the table above, I coded the Kalman filter in both sets of notation and tested both on several examples of input data, parameters, and results from various sources to verify that the implementation was correct.  The two versions in Python/[NumPy](https://numpy.org/) are below:
+
+![Image](./output/kalman_code.png)
+
+Go [here](https://github.com/afairless/kalman_filter/blob/main/src/kalman_filter.py) for the full code.
+
+The [tested examples](https://github.com/afairless/kalman_filter/blob/main/tests/test_kalman_filter.py) came from:
+
+- [Kalman Filter For Dummies, 2009](
+    http://bilgin.esme.org/BitsAndBytes/KalmanFilterforDummies)
+    > Bilgin Esme
+
+- [Kalman and Bayesian Filters in Python, 2020](
+    https://rlabbe.github.io/Kalman-and-Bayesian-Filters-in-Python/)
+    > Roger R Labbe Jr
+
+- [Time Series Analysis by State Space Methods, 2nd Edition, 2012](
+    https://www.google.com/books/edition/Time_Series_Analysis_by_State_Space_Meth/lGyshsfkLrIC)
+    > J. Durbin, S.J. Koopman
+
+The [Durbin and Koopman (2012)](https://www.google.com/books/edition/Time_Series_Analysis_by_State_Space_Meth/lGyshsfkLrIC) example using the classic Nile River data set didn't provide exact numbers for its results, but the results do appear in plots in Figure 2.1 on page 16.  The plots that I obtained appear to match their plots very closely.
+
+First, the data points and the filtered state shown in Figure 2.1 (i):
+
+![Image](./output/filter_state_with_data.png)
+
+Second, the filter variance shown in Figure 2.1 (ii):
+
+![Image](./output/filter_variance.png)
+
+Finally, the residuals shown in Figure 2.1 (iii):
+
+![Image](./output/prediction_errors.png)
